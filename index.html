@@ -185,6 +185,7 @@
             overflow: hidden;
         }
 
+        /* 📱 모바일 잘림 방지 스타일 패치 완료 */
         .bubble {
             position: absolute;
             background: rgba(255, 255, 255, 0.07); 
@@ -193,7 +194,9 @@
             padding: 10px 16px;
             border-radius: 20px;
             font-size: 0.85rem;
-            white-space: nowrap;
+            white-space: normal; /* 👈 길어지면 자동 줄바꿈 처리 */
+            max-width: 75%;     /* 👈 화면 좌우 밖으로 삐져나가지 않게 최대 너비 고정 */
+            word-break: break-all;
             pointer-events: none;
             animation: floatUp 8s linear forwards; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
@@ -349,7 +352,7 @@
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content">
             <span class="close-btn" onclick="closeMuseumModal()">&times;</span>
-            <h3 id="modalTitle">작품에 대한 솔직한 감정</h3>
+            <h3 id="modalTitle">작품에 대한 솔직한 느낌</h3>
             <div class="modal-subtitle">무엇을 느끼셨나요?</div>
             
             <div class="bubble-space" id="bubbleSpace"></div>
@@ -379,12 +382,10 @@
         let 서버공통감데이터 = [];
         let 처음로딩완료 = false; 
         let 마지막레인 = -1;
-        let 내가방금쓴텍스트 = ""; // 🛡️ 내 말풍선 중복 방지용 스토리지
 
         function openMuseumModal(title) {
             현재작품 = title;
             처음로딩완료 = false; 
-            내가방금쓴텍스트 = "";
             document.getElementById('modalTitle').innerText = `『${title}』에 대한 솔직한 느낌`;
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('matchBox').innerHTML = `의견을 입력하시면 <span class="match-highlight">칸트의 공통감(Gemeinsinn)</span> 공간에 단어가 기록됩니다.`;
@@ -409,18 +410,13 @@
                 if (처음로딩완료) {
                     서버공통감데이터.push(newText);
                     
-                    // 🛑 [버그 수정] 내가 방금 전송해서 이미 화면에 떠 있는 말풍선이라면, 서버에서 온 중복 신호는 무시한다!
-                    if (newText === 내가방금쓴텍스트) {
-                        내가방금쓴텍스트 = ""; // 리셋 후 종료
-                        return;
-                    }
-                    
-                    // 🛑 [남의 말풍선 개수 제한] 현재 화면에 떠 있는 남의 말풍선이 3개 이상이면 가장 오래된 것 하나를 지운다.
+                    // 🛑 [화면 말풍선 상한제 패치] 떠 있는 말풍선 개수가 나를 포함해 총 3개 이상이면 가장 오래된 것 자동 삭제
                     const currentBubbles = document.querySelectorAll('.bubble');
                     if (currentBubbles.length >= 3) {
                         currentBubbles[0].remove();
                     }
 
+                    // 🌐 오직 파이어베이스 신호를 받았을 때만 1번 화면에 그리기 (중복 제거)
                     createBubbleElement(newText);
                 }
             });
@@ -438,16 +434,18 @@
             bubble.className = 'bubble';
             bubble.innerText = text;
 
-            let 현재레인 = Math.floor(Math.random() * 4);
+            // 📱 모바일 폰에서도 겹치지 않고 잘리지 않는 3레인 안전 분배법
+            let 현재레인 = Math.floor(Math.random() * 3);
             while (현재레인 === 마지막레인) {
-                현재레인 = Math.floor(Math.random() * 4);
+                현재레인 = Math.floor(Math.random() * 3);
             }
             마지막레인 = 현재레인;
 
-            const baseLeft = 현재레인 * 22 + 5; 
-            const randomOffset = Math.random() * 8; 
+            // 레인에 따른 left 시작 위치 조절 (오른쪽 마진 확보를 위해 최대 50%를 넘지 않게 조절)
+            const baseLeft = 현재레인 * 24 + 6; 
+            const randomOffset = Math.random() * 4; 
             const finalLeft = baseLeft + randomOffset;
-            const randomXMove = (Math.random() * 30 - 15) + "px"; 
+            const randomXMove = (Math.random() * 20 - 10) + "px"; 
 
             bubble.style.left = `${finalLeft}%`;
             bubble.style.setProperty('--random-x', randomXMove);
@@ -463,41 +461,34 @@
             
             if(userText === "") return;
 
-            // 🚀 초고속 반응 패치: 내 화면에는 엔터 치자마자 딱 '1개'만 무조건 즉시 발사!
-            내가방금쓴텍스트 = userText; 
-            createBubbleElement(userText);
             input.value = ""; 
 
-            setTimeout(() => {
-                const 현재단어들 = userText.split(" ")
-                                          .map(w => w.substring(0, 3)) 
-                                          .filter(w => w.length >= 1);
+            // 🚀 서버로 데이터 즉각 Push -> 서버가 수신하자마자 리스너를 통해 내 화면과 친구 화면에 동시에 1개씩만 정상 표출!
+            const 현재단어들 = userText.split(" ")
+                                      .map(w => w.substring(0, 3)) 
+                                      .filter(w => w.length >= 1);
 
-                let 동일감정인원수 = 0;
+            let 동일감정인원수 = 0;
 
-                서버공통감데이터.forEach(pastText => {
-                    let matchFound = false;
-                    const 과거단어들 = pastText.split(" ").map(w => w.substring(0, 3)).filter(w => w.length >= 1);
+            서버공통감데이터.forEach(pastText => {
+                let matchFound = false;
+                const 과거단어들 = pastText.split(" ").map(w => w.substring(0, 3)).filter(w => w.length >= 1);
 
-                    현재단어들.forEach(curW => {
-                        if(pastText.includes(curW)) matchFound = true;
-                    });
-                    과거단어들.forEach(pastW => {
-                        if(userText.includes(pastW)) matchFound = true;
-                    });
-
-                    if(matchFound) 동일감정인원수++;
+                현재단어들.forEach(curW => {
+                    if(pastText.includes(curW)) matchFound = true;
+                });
+                과거단어들.forEach(pastW => {
+                    if(userText.includes(pastW)) matchFound = true;
                 });
 
-                // 서버 업로드 (여기로 들어가면 남들의 리스너가 작동함)
-                database.ref('artwork_emotions/' + 현재작품).push(userText);
-                
-                서버공통감데이터.push(userText);
-                동일감정인원수 += 1;
+                if(matchFound) 동일감정인원수++;
+            });
 
-                const matchBox = document.getElementById('matchBox');
-                matchBox.innerHTML = `현재까지 당신과 유사한 느낌을 공유한 사람은 <span class="match-highlight">총 ${동일감정인원수}명</span>입니다.`;
-            }, 0);
+            database.ref('artwork_emotions/' + 현재작품).push(userText);
+            동일감정인원수 += 1;
+
+            const matchBox = document.getElementById('matchBox');
+            matchBox.innerHTML = `현재까지 당신과 유사한 느낌을 공유한 사람은 <span class="match-highlight">총 ${동일감정인원수}명</span>입니다.`;
         }
 
         function handleKeyPress(e) {
