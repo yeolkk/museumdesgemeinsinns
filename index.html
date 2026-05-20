@@ -86,12 +86,6 @@
             object-fit: cover;
         }
 
-        .art-placeholder {
-            color: #444;
-            font-size: 0.9rem;
-            letter-spacing: 2px;
-        }
-
         .meta-info {
             margin-top: 30px;
             width: 100%;
@@ -251,7 +245,6 @@
         .chat-input:focus {
             border-color: #666;
         }
-        /* 옅은 회색 글씨 스타일 커스텀 */
         .chat-input::placeholder {
             color: #555;
             font-style: normal;
@@ -292,24 +285,68 @@
     <div class="museum-container">
         
         <div class="artwork-section">
-            <div class="frame" onclick="openMuseumModal('검은 사각형')">
-                <div class="art-placeholder">[ 검은 사각형 사진 미설정 ]</div>
-            </div>
-            <div class="meta-info">
-                <h2>검은 사각형 (Black Square)</h2>
-                <p>카지미르 말레비치, 1915</p>
-                <button class="interact-btn" onclick="openMuseumModal('검은 사각형')">솔직한 느낌 공유하기</button>
-            </div>
-        </div>
-
-        <div class="artwork-section">
             <div class="frame" onclick="openMuseumModal('기억의 지속')">
-                <div class="art-placeholder">[ 기억의 지속 사진 미설정 ]</div>
+                <img src="IMG_1492.webp" alt="기억의 지속">
             </div>
             <div class="meta-info">
                 <h2>기억의 지속 (The Persistence of Memory)</h2>
                 <p>살바도르 달리, 1931</p>
                 <button class="interact-btn" onclick="openMuseumModal('기억의 지속')">솔직한 느낌 공유하기</button>
+            </div>
+        </div>
+
+        <div class="artwork-section">
+            <div class="frame" onclick="openMuseumModal('검은 사각형과 빨간 사각형')">
+                <img src="IMG_1494.jpeg" alt="검은 사각형과 빨간 사각형">
+            </div>
+            <div class="meta-info">
+                <h2>검은 사각형과 빨간 사각형 (Black Square and Red Square)</h2>
+                <p>카지미르 말레비치, 1915</p>
+                <button class="interact-btn" onclick="openMuseumModal('검은 사각형과 빨간 사각형')">솔직한 느낌 공유하기</button>
+            </div>
+        </div>
+
+        <div class="artwork-section">
+            <div class="frame" onclick="openMuseumModal('무제')">
+                <img src="IMG_1495.jpeg" alt="무제">
+            </div>
+            <div class="meta-info">
+                <h2>무제 (Untitled)</h2>
+                <p>마크 로스코, 1949</p>
+                <button class="interact-btn" onclick="openMuseumModal('무제')">솔직한 느낌 공유하기</button>
+            </div>
+        </div>
+
+        <div class="artwork-section">
+            <div class="frame" onclick="openMuseumModal('샘')">
+                <img src="IMG_1496.jpeg" alt="샘">
+            </div>
+            <div class="meta-info">
+                <h2>샘 (Fountain)</h2>
+                <p>마르셀 뒤샹, 1917</p>
+                <button class="interact-btn" onclick="openMuseumModal('샘')">솔직한 느낌 공유하기</button>
+            </div>
+        </div>
+
+        <div class="artwork-section">
+            <div class="frame" onclick="openMuseumModal('코미디언')">
+                <img src="IMG_1497.jpeg" alt="코미디언">
+            </div>
+            <div class="meta-info">
+                <h2>코미디언 (Comedian)</h2>
+                <p>마ורי치오 카텔란, 2019</p>
+                <button class="interact-btn" onclick="openMuseumModal('코미디언')">솔직한 느낌 공유하기</button>
+            </div>
+        </div>
+
+        <div class="artwork-section">
+            <div class="frame" onclick="openMuseumModal('예술가의 똥')">
+                <img src="IMG_1498.jpeg" alt="예술가의 똥">
+            </div>
+            <div class="meta-info">
+                <h2>예술가의 똥 (Artist's Shit)</h2>
+                <p>피에로 만조니, 1961</p>
+                <button class="interact-btn" onclick="openMuseumModal('예술가의 똥')">솔직한 느낌 공유하기</button>
             </div>
         </div>
 
@@ -337,11 +374,16 @@
     </div>
 
     <script>
-        let 현재작품 = '검은 사각형';
+        let 현재작품 = '기억의 지속';
         
+        // 실시간으로 작품별 관람객 단어가 누적되는 가상 DB 세팅
         const 실시간공통감DB = {
-            '검은 사각형': [],
-            '기억의 지속': []
+            '기억의 지속': [],
+            '검은 사각형과 빨간 사각형': [],
+            '무제': [],
+            '샘': [],
+            '코미디언': [],
+            '예술가의 똥': []
         };
 
         function openMuseumModal(title) {
@@ -382,6 +424,7 @@
 
             createBubbleElement(userText);
 
+            // 단어를 유연하게 쪼개어 교차 검사하는 공통감 매칭 알고리즘
             const 현재단어들 = userText.split(" ")
                                       .map(w => w.substring(0, 3)) 
                                       .filter(w => w.length >= 1);
@@ -410,7 +453,7 @@
             동일감정인원수 += 1;
 
             const matchBox = document.getElementById('matchBox');
-            matchBox.innerHTML = `현재까지 당신과 유사한 감정의 맥락을 소통하고 공유한 대중은 <span class="match-highlight">총 ${동일감정인원수}명</span>입니다.`;
+            matchBox.innerHTML = `현재까지 당신과 유사한 감정의 맥락을 느낀 사람은 <span class="match-highlight">총 ${동일감정인원수}명</span>입니다.`;
 
             input.value = ""; 
         }
