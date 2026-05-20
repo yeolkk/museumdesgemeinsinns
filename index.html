@@ -1,3 +1,371 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Museum des Gemeinsinns</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Cinzel', 'Playfair Display', 'Pretendard', serif;
+            background-color: #0b0b0b;
+            color: #f5f5f5;
+            overflow-x: hidden;
+            overflow-y: auto; 
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 90px;
+            background: rgba(11, 11, 11, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+            z-index: 10;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        header h1 {
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 5px;
+            color: #e5e5e5;
+            text-transform: uppercase;
+        }
+
+        .museum-container {
+            max-width: 600px; 
+            margin: 0 auto;
+            padding: 140px 20px 80px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 120px;
+        }
+
+        .artwork-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .frame {
+            width: 100%;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            cursor: pointer;
+            transition: transform 0.4s ease;
+            display: block;
+        }
+        .frame:hover {
+            transform: translateY(-5px);
+        }
+
+        .frame img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 2px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .meta-info {
+            margin-top: 30px;
+            width: 100%;
+        }
+        .meta-info h2 {
+            font-size: 1.3rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+        .meta-info p {
+            color: #666;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+        
+        .interact-btn {
+            background: transparent;
+            color: #ccc;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 28px;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        .interact-btn:hover {
+            background: #fff;
+            color: #000;
+            border-color: #fff;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 5, 5, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            z-index: 100;
+            padding: 20px;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background: #111;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 30px 20px;
+            width: 100%;
+            max-width: 500px;
+            height: 80vh;
+            border-radius: 6px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #555;
+            z-index: 10;
+        }
+        .modal-content h3 {
+            font-size: 1.05rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            color: #e5e5e5;
+            margin-bottom: 4px;
+        }
+        
+        .modal-subtitle {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        .bubble-space {
+            flex: 1;
+            width: 100%;
+            position: relative;
+            background: #0d0d0d;
+            border: 1px solid rgba(255,255,255,0.03);
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.06); 
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #ddd;
+            padding: 12px 18px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            pointer-events: none;
+            animation: floatUp 9s linear forwards; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 5;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(65vh) translateX(0);
+                opacity: 0;
+            }
+            15% { opacity: 1; }
+            85% { opacity: 1; }
+            100% {
+                transform: translateY(-10vh) translateX(var(--random-x, 20px));
+                opacity: 0;
+            }
+        }
+
+        .input-area {
+            width: 100%;
+            background: #141414;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .chat-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .chat-input {
+            flex: 1;
+            background: #222;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 12px;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            outline: none;
+        }
+        .chat-input:focus {
+            border-color: #666;
+        }
+        .chat-input::placeholder {
+            color: #555;
+            font-style: normal;
+        }
+        .submit-btn {
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 0 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .commonsense-match-box {
+            font-size: 0.85rem;
+            color: #888;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 10px;
+            text-align: center;
+            letter-spacing: 0.5px;
+            line-height: 1.4;
+        }
+        .match-highlight {
+            color: #fff;
+            font-weight: bold;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500&family=Playfair+Display&display=swap" rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+</head>
+<body>
+
+    <header>
+        <h1>Museum des Gemeinsinns</h1>
+    </header>
+
+    <div class="museum-container">
+        <div class="artwork-section">
+            <div class="frame" onclick="openMuseumModal('기억의 지속')">
+                <img src="IMG_1492.webp" alt="기억의 지속">
+            </div>
+            <div class="meta-info">
+                <h2>기억의 지속 (The Persistence of Memory)</h2>
+                <p>살바도르 달리, 1931</p>
+                <button class="interact-btn" onclick="openMuseumModal('기억의 지속')">솔직한 느낌 공유하기</button>
+            </div>
+        </div>
+
+        <div class="artwork-section">
+            <div class="frame" onclick="openMuseumModal('검은 사각형과 빨간 사각형')">
+                <img src="IMG_1494.jpeg" alt="검은 사각형과 빨간 사각형">
+            </div>
+            <div class="meta-info">
+                <h2>검은 사각형과 빨간 사각형 (Black Square and Red Square)</h2>
+                <p>카지미르 말레비치, 1915</p>
+                <button class="interact-btn" onclick="openMuseumModal('검은 사각형과 빨간 사각형')">솔직한 느낌 공유하기</button>
+            </div>
+        </div>
+
+        <div class="artwork-section">
+            <div class="frame" onclick="openMuseumModal('무제')">
+                <img src="IMG_1495.jpeg" alt="무제">
+            </div>
+            <div class="meta-info">
+                <h2>무제 (Untitled)</h2>
+                <p>마크 로스코, 1949</p>
+                <button class="interact-btn" onclick="openMuseumModal('무제')">솔직한 느낌 공유하기</button>
+            </div>
+        </div>
+
+        <div class="artwork-section">
+            <div class="frame" onclick="openMuseumModal('샘')">
+                <img src="IMG_1496.jpeg" alt="샘">
+            </div>
+            <div class="meta-info">
+                <h2>샘 (Fountain)</h2>
+                <p>마르셀 뒤샹, 1917</p>
+                <button class="interact-btn" onclick="openMuseumModal('샘')">솔직한 느낌 공유하기</button>
+            </div>
+        </div>
+
+        <div class="artwork-section">
+            <div class="frame" onclick="openMuseumModal('코미디언')">
+                <img src="IMG_1497.jpeg" alt="코미디언">
+            </div>
+            <div class="meta-info">
+                <h2>코미디언 (Comedian)</h2>
+                <p>마ורי치오 카텔란, 2019</p>
+                <button class="interact-btn" onclick="openMuseumModal('코미디언')">솔직한 느낌 공유하기</button>
+            </div>
+        </div>
+
+        <div class="artwork-section">
+            <div class="frame" onclick="openMuseumModal('예술가의 똥')">
+                <img src="IMG_1498.jpeg" alt="예술가의 똥">
+            </div>
+            <div class="meta-info">
+                <h2>예술가의 똥 (Artist's Shit)</h2>
+                <p>피에로 만조니, 1961</p>
+                <button class="interact-btn" onclick="openMuseumModal('예술가의 똥')">솔직한 느낌 공유하기</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeMuseumModal()">&times;</span>
+            <h3 id="modalTitle">작품에 대한 느낌</h3>
+            <div class="modal-subtitle">무엇을 느끼셨나요?</div>
+            
+            <div class="bubble-space" id="bubbleSpace"></div>
+
+            <div class="input-area">
+                <div class="chat-form">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="무슨 의도인지 모르겠다, 어렵다, 감동적이다, 아름답다 등 여러분이 느낀 점을 자유롭게 적어주세요!" onkeypress="handleKeyPress(event)">
+                    <button class="submit-btn" onclick="addNewBubble()">등록</button>
+                </div>
+                <div class="commonsense-match-box" id="matchBox">
+                    의견을 입력하시면 <span class="match-highlight">칸트의 공통감(Gemeinsinn)</span> 공간에 단어가 기록됩니다.
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const firebaseConfig = {
             projectId: "museum-des-gemeinsinns",
@@ -12,20 +380,20 @@
 
         function openMuseumModal(title) {
             현재작품 = title;
-            document.getElementById('modalTitle').innerText = `『${title}』에 대한 솔직한 느낌`;
+            document.getElementById('modalTitle').innerText = `『${title}』에 대한 솔직한 감정`;
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('matchBox').innerHTML = `의견을 입력하시면 <span class="match-highlight">칸트의 공통감(Gemeinsinn)</span> 공간에 단어가 기록됩니다.`;
             document.getElementById('chatInput').value = "";
             document.getElementById('bubbleSpace').innerHTML = ""; 
+            서버공통감데이터 = [];
 
             const artworkRef = database.ref('artwork_emotions/' + 현재작품);
-            artworkRef.on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    서버공통감데이터 = Object.values(data);
-                } else {
-                    서버공통감데이터 = [];
-                }
+            
+            // 📡 [핵심 수정] 새로 추가되는 데이터를 실시간으로 감시 (누가 쓰든 무조건 내 화면에 실시간 발사)
+            artworkRef.on('child_added', (snapshot) => {
+                const newText = snapshot.val();
+                서버공통감데이터.push(newText);
+                createBubbleElement(newText); // 👈 친구가 다른 기기에서 보내도 내 화면에 즉시 말풍선 팝업!
             });
         }
 
@@ -57,15 +425,12 @@
             
             if(userText === "") return;
 
-            // 🔥 [개선] 최우선 순위: 무조건 말풍선부터 화면에 즉시 띄우고 입력창 비우기!
-            createBubbleElement(userText);
             input.value = ""; 
 
-            // 그 이후에 무거운 연산 및 서버 통신을 백그라운드에서 처리 (비동기 체감 최적화)
             setTimeout(() => {
                 const 현재단어들 = userText.split(" ")
-                                          .map(w => w.substring(0, 3)) 
-                                          .filter(w => w.length >= 1);
+                                      .map(w => w.substring(0, 3)) 
+                                      .filter(w => w.length >= 1);
 
                 let 동일감정인원수 = 0;
 
@@ -83,12 +448,11 @@
                     if(matchFound) 동일감정인원수++;
                 });
 
-                // 파이어베이스 데이터 업로드
+                // 🌐 서버로 데이터를 전송하면 'child_added' 이벤트가 실행되면서 나를 포함한 모두에게 실시간으로 즉시 발사됨
                 database.ref('artwork_emotions/' + 현재작품).push(userText);
                 
                 동일감정인원수 += 1;
 
-                // 카운팅 텍스트 반영
                 const matchBox = document.getElementById('matchBox');
                 matchBox.innerHTML = `현재까지 당신과 유사한 느낌을 공유한 사람은 <span class="match-highlight">총 ${동일감정인원수}명</span>입니다.`;
             }, 0);
@@ -100,3 +464,5 @@
             }
         }
     </script>
+</body>
+</html>
