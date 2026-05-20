@@ -399,12 +399,11 @@
             현재작품 = title;
             데이터로드완료 = false;
             
-            // UI 초기화 및 로딩 잠금 상태 돌입
             const input = document.getElementById('chatInput');
             const btn = document.getElementById('submitBtn');
             input.disabled = true;
             btn.disabled = true;
-            input.placeholder = "이전 감정 데이터를 연결하는 중...";
+            input.placeholder = "느낌 데이터를 연결하는 중...";
             btn.innerText = "로딩";
 
             document.getElementById('modalTitle').innerText = `『${title}』에 대한 솔직한 느낌`;
@@ -414,14 +413,13 @@
             document.getElementById('bubbleSpace').innerHTML = ""; 
             서버공통감데이터 = [];
 
-            // 📡 확실하게 서버 데이터를 다 긁어온 다음 잠금 해제하는 안전 가드
+            // 📡 정확하게 파이어베이스의 과거 리얼 데이터만 다 긁어옴
             database.ref('artwork_emotions/' + 현재작품).once('value').then((snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     서버공통감데이터 = Object.values(data);
                 }
                 
-                // 데이터 다운로드가 끝나면 입력창과 버튼 해제!
                 데이터로드완료 = true;
                 input.disabled = false;
                 btn.disabled = false;
@@ -429,7 +427,6 @@
                 btn.innerText = "등록";
             }).catch((err) => {
                 console.error("데이터 로드 실패:", err);
-                // 에러 나더라도 최소한 입력은 되게 보정
                 input.disabled = false;
                 btn.disabled = false;
                 btn.innerText = "등록";
@@ -471,41 +468,30 @@
         }
 
         function addNewBubble() {
-            if (!데이터로드완료) return; // 미완료 시 튕겨내기
+            if (!데이터로드완료) return; 
 
             const input = document.getElementById('chatInput');
             const userText = input.value.trim();
             
             if(userText === "") return;
 
-            // 1. 내 말풍선 1개 즉시 띄우기
+            // 1. 내 말풍선 1개 즉시 표출
             createBubbleElement(userText, true);
             input.value = ""; 
 
-            // 2. 다른 사람들의 과거 데이터 뿜어내기 파트
+            // 2. 다른 사람들의 리얼 과거 데이터만 뿜어내기 (가짜 쓰레기 데이터 완전 삭제 완료)
             if (서버공통감데이터.length > 0) {
-                // 과거에 누적된 리스트 셔플
                 const 섞은데이터 = [...서버공통감데이터].sort(() => 0.5 - Math.random());
-                // 최대 4개 선택
                 const 노출개수 = Math.min(4, 섞은데이터.length);
                 
                 for (let i = 0; i < 노출개수; i++) {
                     setTimeout(() => {
                         createBubbleElement(섞은데이터[i], false);
-                    }, (i + 1) * 400); // 0.4초 간격으로 순차적 연출
-                }
-            } else {
-                // 만약 서버에 진짜 아무 데이터도 없다면, 예시용 가상 대중 말풍선을 몇 개 서포트해 줌 (쓸쓸하지 않게!)
-                const 추천감정들 = ["신선하다", "심오하네..", "작가의 의도가 뭘까?", "난 난해하다"];
-                const 노출개수 = 2;
-                for (let i = 0; i < 노출개수; i++) {
-                    setTimeout(() => {
-                        createBubbleElement(추천감정들[Math.floor(Math.random() * 추천감정들.length)], false);
-                    }, (i + 1) * 500);
+                    }, (i + 1) * 400); 
                 }
             }
 
-            // 3. 칸트의 공통감 연산 로직
+            // 3. 칸트의 공통감 알고리즘 연산
             const 현재단어들 = userText.split(" ")
                                       .map(w => w.substring(0, 3)) 
                                       .filter(w => w.length >= 1);
@@ -526,10 +512,9 @@
                 if(matchFound) 동일감정인원수++;
             });
 
-            // 서버로 보내기
+            // 진짜 데이터베이스 업로드
             database.ref('artwork_emotions/' + 현재작품).push(userText);
             
-            // 다음 전송을 위해 로컬 백업 배열에도 내 데이터 추가
             서버공통감데이터.push(userText);
             동일감정인원수 += 1;
 
