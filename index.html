@@ -279,7 +279,6 @@
     </header>
 
     <div class="museum-container">
-        
         <div class="artwork-section">
             <div class="frame" onclick="openMuseumModal('기억의 지속')">
                 <img src="IMG_1492.webp" alt="기억의 지속">
@@ -345,7 +344,6 @@
                 <button class="interact-btn" onclick="openMuseumModal('예술가의 똥')">솔직한 느낌 공유하기</button>
             </div>
         </div>
-
     </div>
 
     <div class="modal-overlay" id="modalOverlay">
@@ -365,20 +363,13 @@
                     의견을 입력하시면 <span class="match-highlight">칸트적 공통감(Gemeinsinn)</span> 공간에 단어가 기록됩니다.
                 </div>
             </div>
-
         </div>
     </div>
 
     <script>
-        // ⚠️ [중요] 구글 Firebase 콘솔에서 발급받은 본인의 설정 값으로 변경해야 정상 작동합니다.
+        // 🌐 보내준 프로젝트 주소 연동 완료!
         const firebaseConfig = {
-            apiKey: "본인의_API_KEY",
-            authDomain: "본인의_PROJECT_ID.firebaseapp.com",
-            databaseURL: "https://본인의_PROJECT_ID-default-rtdb.firebaseio.com",
-            projectId: "본인의_PROJECT_ID",
-            storageBucket: "본인의_PROJECT_ID.appspot.com",
-            messagingSenderId: "본인의_SENDER_ID",
-            appId: "본인의_APP_ID"
+            databaseURL: "https://museum-des-gemeinsinns-default-rtdb.firebaseio.com"
         };
 
         // Firebase 초기화
@@ -396,19 +387,12 @@
             document.getElementById('chatInput').value = "";
             document.getElementById('bubbleSpace').innerHTML = ""; 
 
-            // 🌐 다른 디바이스가 등록한 데이터를 서버에서 실시간으로 불러오고 동기화하기
+            // Firebase 실시간 데이터 감시 열기
             const artworkRef = database.ref('artwork_emotions/' + 현재작품);
             artworkRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     서버공통감데이터 = Object.values(data);
-                    
-                    // 기존 화면의 말풍선을 갱신하되, 너무 많이 겹치지 않게 최근 5개만 화면에 띄워주기
-                    document.getElementById('bubbleSpace').innerHTML = ""; 
-                    const 최근데이터 = 서버공통감데이터.slice(-5);
-                    최근데이터.forEach(text => {
-                        createBubbleElement(text);
-                    });
                 } else {
                     서버공통감데이터 = [];
                 }
@@ -417,7 +401,6 @@
 
         function closeMuseumModal() {
             document.getElementById('modalOverlay').classList.remove('active');
-            // 모달을 닫을 때는 실시간 리스너를 해제하여 리소스 낭비 방지
             database.ref('artwork_emotions/' + 현재작품).off();
         }
 
@@ -444,10 +427,10 @@
             
             if(userText === "") return;
 
-            // 1. 내가 입력한 텍스트를 우선 화면에 즉시 띄움
+            // ✨ [수정] 등록하자마자 화면에 말풍선 즉시 띄우기!
             createBubbleElement(userText);
 
-            // 2. 어근 추출 매칭 로직 작동
+            // 어근 추출 파편 매칭 알고리즘 작동
             const 현재단어들 = userText.split(" ")
                                       .map(w => w.substring(0, 3)) 
                                       .filter(w => w.length >= 1);
@@ -468,7 +451,7 @@
                 if(matchFound) 동일감정인원수++;
             });
 
-            // 3. 🌐 로컬 저장 대신, 전 세계 공용 Firebase Realtime Database 서버로 데이터 전송(Push)
+            // Firebase에 실시간 업로드 (여러 기기 연동)
             database.ref('artwork_emotions/' + 현재작품).push(userText);
             
             동일감정인원수 += 1;
