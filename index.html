@@ -329,7 +329,7 @@
             </div>
             <div class="meta-info">
                 <h2>코미디언 (Comedian)</h2>
-                <p>마ורי치오 카텔란, 2019</p>
+                <p>마우리치오 카텔란, 2019</p>
                 <button class="interact-btn" onclick="openMuseumModal('코미디언')">솔직한 느낌 공유하기</button>
             </div>
         </div>
@@ -350,7 +350,7 @@
         <div class="modal-content">
             <span class="close-btn" onclick="closeMuseumModal()">&times;</span>
             <h3 id="modalTitle">작품에 대한 솔직한 감정</h3>
-            <div class="modal-subtitle">머리로 분석하지 말고, 보자마자 스친 날것의 감정을 적어주세요.</div>
+            <div class="modal-subtitle">무엇을 느끼셨나요?</div>
             
             <div class="bubble-space" id="bubbleSpace"></div>
 
@@ -360,15 +360,16 @@
                     <button class="submit-btn" onclick="addNewBubble()">등록</button>
                 </div>
                 <div class="commonsense-match-box" id="matchBox">
-                    의견을 입력하시면 <span class="match-highlight">칸트적 공통감(Gemeinsinn)</span> 공간에 단어가 기록됩니다.
+                    의견을 입력하시면 <span class="match-highlight">칸트의 공통감(Gemeinsinn)</span> 공간에 단어가 기록됩니다.
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // 🌐 보내준 프로젝트 주소 연동 완료!
+        // 🛠️ 필수 연동 정보(프로젝트 ID 포함)를 완벽히 채워넣어 초기화 오류를 해결했습니다.
         const firebaseConfig = {
+            projectId: "museum-des-gemeinsinns",
             databaseURL: "https://museum-des-gemeinsinns-default-rtdb.firebaseio.com"
         };
 
@@ -387,7 +388,7 @@
             document.getElementById('chatInput').value = "";
             document.getElementById('bubbleSpace').innerHTML = ""; 
 
-            // Firebase 실시간 데이터 감시 열기
+            // 서버 데이터 실시간 대기 및 동기화
             const artworkRef = database.ref('artwork_emotions/' + 현재작품);
             artworkRef.on('value', (snapshot) => {
                 const data = snapshot.val();
@@ -427,10 +428,10 @@
             
             if(userText === "") return;
 
-            // ✨ [수정] 등록하자마자 화면에 말풍선 즉시 띄우기!
+            // 🚀 [해결] 클릭 혹은 엔터 치자마자 서버 기다리지 않고 말풍선 무조건 바로 발사!
             createBubbleElement(userText);
 
-            // 어근 추출 파편 매칭 알고리즘 작동
+            // 매칭 시스템 연산 시작
             const 현재단어들 = userText.split(" ")
                                       .map(w => w.substring(0, 3)) 
                                       .filter(w => w.length >= 1);
@@ -451,7 +452,7 @@
                 if(matchFound) 동일감정인원수++;
             });
 
-            // Firebase에 실시간 업로드 (여러 기기 연동)
+            // 🌐 다른 기기에서도 동시 취합되도록 파이어베이스 서버로 전송
             database.ref('artwork_emotions/' + 현재작품).push(userText);
             
             동일감정인원수 += 1;
