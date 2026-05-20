@@ -3,153 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>디지털 공통감 미술관</title>
+    <title>Museum des Gemeinsinns</title>
     <style>
-        /* 1. 기본 스타일 리셋 */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
         body {
-            font-family: 'Pretendard', -apple-system, sans-serif;
-            background-color: #111;
-            color: #fff;
-            overflow-y: hidden; /* 세로 스크롤 차단 */
+            font-family: 'Cinzel', 'Playfair Display', 'Pretendard', serif;
+            background-color: #0b0b0b;
+            color: #f5f5f5;
+            overflow-x: hidden;
+            overflow-y: auto; 
         }
 
-        /* 2. 상단 헤더 */
         header {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            height: 80px;
-            background: rgba(17, 17, 17, 0.8);
-            backdrop-filter: blur(10px);
+            height: 90px;
+            background: rgba(11, 11, 11, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 0 50px;
+            justify-content: center;
+            padding: 0 20px;
             z-index: 10;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
         header h1 {
-            font-size: 1.5rem;
-            letter-spacing: 2px;
-        }
-        header p {
-            color: #aaa;
-            font-size: 0.9rem;
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 5px;
+            color: #e5e5e5;
+            text-transform: uppercase;
         }
 
-        /* 3. 가로 스크롤 전시 공간 */
         .museum-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 140px 20px 80px 20px;
             display: flex;
-            align-items: center;
-            height: 100vh;
-            padding: 0 100px;
-            overflow-x: auto; /* 가로 스크롤 활성화 */
-            scroll-behavior: smooth;
-        }
-        /* 스크롤바 디자인 custom */
-        .museum-container::-webkit-scrollbar {
-            height: 8px;
-        }
-        .museum-container::-webkit-scrollbar-thumb {
-            background: #444;
-            border-radius: 4px;
+            flex-direction: column;
+            gap: 120px;
         }
 
-        /* 4. 개별 미술 작품 구역 */
         .artwork-section {
-            flex: 0 0 auto;
-            width: 500px;
-            margin-right: 150px;
+            width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
         }
+        
         .frame {
             width: 100%;
-            height: 450px;
-            background-color: #222;
-            border: 10px solid #000;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            max-width: 550px;
+            height: 400px;
+            background-color: #141414;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
             cursor: pointer;
-            transition: transform 0.3s ease;
+            transition: transform 0.4s ease, border-color 0.4s ease;
+            overflow: hidden;
+            border-radius: 4px;
         }
         .frame:hover {
-            transform: scale(1.02);
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.3);
         }
 
-        /* 임시 가상 현대미술 오브제들 스타일 */
-        .art-dot { width: 20px; height: 20px; background: #fff; border-radius: 50%; }
-        .art-shapes { width: 150px; height: 150px; border: 3px solid #ff3333; transform: rotate(45deg); position: relative; }
-        .art-shapes::after { content:''; position: absolute; width: 80px; height: 80px; background: #3333ff; top:-20px; left:-20px; }
-        .art-banana { font-size: 5rem; transform: rotate(-20deg); }
+        .frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .art-placeholder {
+            color: #444;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+        }
 
         .meta-info {
-            margin-top: 25px;
+            margin-top: 30px;
+            width: 100%;
+            max-width: 550px;
         }
         .meta-info h2 {
-            font-size: 1.2rem;
-            margin-bottom: 5px;
+            font-size: 1.3rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
         }
         .meta-info p {
-            color: #888;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
+            color: #666;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
         }
+        
         .interact-btn {
-            background: #fff;
-            color: #000;
-            border: none;
-            padding: 10px 20px;
-            font-weight: bold;
+            background: transparent;
+            color: #ccc;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 28px;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
             cursor: pointer;
-            border-radius: 20px;
-            transition: 0.2s;
+            border-radius: 2px;
+            transition: all 0.3s ease;
         }
         .interact-btn:hover {
-            background: #ff3333;
-            color: #fff;
+            background: #fff;
+            color: #000;
+            border-color: #fff;
         }
 
-        /* 5. 상호작용 팝업창 (모달) */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.85);
+            background: rgba(5, 5, 5, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             display: flex;
             align-items: center;
             justify-content: center;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.4s ease;
             z-index: 100;
+            padding: 20px;
         }
         .modal-overlay.active {
             opacity: 1;
             pointer-events: auto;
         }
         .modal-content {
-            background: #222;
-            border: 1px solid #444;
-            padding: 40px;
-            width: 90%;
+            background: #111;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 30px 20px;
+            width: 100%;
             max-width: 500px;
-            border-radius: 15px;
+            height: 80vh;
+            border-radius: 6px;
             text-align: center;
             position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
         .close-btn {
             position: absolute;
@@ -157,112 +169,135 @@
             right: 20px;
             font-size: 1.5rem;
             cursor: pointer;
-            color: #888;
+            color: #555;
+            z-index: 10;
         }
         .modal-content h3 {
-            margin-bottom: 25px;
-            font-size: 1.3rem;
+            font-size: 1.05rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            color: #e5e5e5;
+            margin-bottom: 15px;
         }
 
-        /* 감정 버튼 그룹 */
-        .emotion-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .emotion-btn {
-            background: #333;
-            color: #fff;
-            border: 1px solid #555;
-            padding: 15px;
-            font-size: 1rem;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .emotion-btn:hover {
-            background: #444;
-            border-color: #fff;
-        }
-
-        /* 통계 결과 화면 */
-        .result-screen {
-            display: none;
-        }
-        .stat-bar-container {
-            margin: 20px 0;
-            text-align: left;
-        }
-        .stat-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-            font-size: 0.9rem;
-        }
-        .stat-bar-bg {
+        .bubble-space {
+            flex: 1;
             width: 100%;
-            height: 15px;
-            background: #333;
-            border-radius: 10px;
+            position: relative;
+            background: #0d0d0d;
+            border: 1px solid rgba(255,255,255,0.03);
+            border-radius: 4px;
+            margin-bottom: 20px;
             overflow: hidden;
         }
-        .stat-bar-fill {
-            height: 100%;
-            background: #ff3333;
-            width: 0%; /* JS로 애니메이션 조절 */
-            transition: width 1s cubic-bezier(0.1, 0.8, 0.3, 1);
+
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.06); /* 여러 개 쌓였을 때 겹쳐 보이도록 투명도 조정 */
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #ddd;
+            padding: 12px 18px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            pointer-events: none;
+            animation: floatUp 9s linear forwards; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 5;
         }
-        .peer-feedback {
-            background: #111;
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(65vh) translateX(0);
+                opacity: 0;
+            }
+            15% { opacity: 1; }
+            85% { opacity: 1; }
+            100% {
+                transform: translateY(-10vh) translateX(var(--random-x, 20px));
+                opacity: 0;
+            }
+        }
+
+        .input-area {
+            width: 100%;
+            background: #141414;
             padding: 15px;
-            border-radius: 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .chat-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .chat-input {
+            flex: 1;
+            background: #222;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 12px;
+            font-size: 0.9rem;
+            border-radius: 4px;
+            outline: none;
+        }
+        .chat-input:focus {
+            border-color: #666;
+        }
+        .submit-btn {
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 0 20px;
             font-size: 0.85rem;
-            color: #ccc;
-            text-align: left;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .commonsense-match-box {
+            font-size: 0.85rem;
+            color: #888;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 10px;
+            text-align: center;
+            letter-spacing: 0.5px;
             line-height: 1.4;
         }
+        .match-highlight {
+            color: #fff;
+            font-weight: bold;
+        }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500&family=Playfair+Display&display=swap" rel="stylesheet">
 </head>
 <body>
 
     <header>
-        <h1>DIGITAL COMMON SENSE</h1>
-        <p>마우스 휠을 돌려 전시를 관람하세요 →</p>
+        <h1>Museum des Gemeinsinns</h1>
     </header>
 
-    <div class="museum-container" id="museumContainer">
+    <div class="museum-container">
         
         <div class="artwork-section">
-            <div class="frame" onclick="openMuseumModal('작품 A', '당혹감', '78%', '“나만 무지해서 당황한 줄 알았는데, 관람객의 78%가 나와 같은 감정을 공유하고 있습니다. 당신의 당혹감은 오진이 아닌 정당한 미적 감상입니다.”')">
-                <div class="art-dot"></div>
+            <div class="frame" onclick="openMuseumModal('작품 A')">
+                <div class="art-placeholder">[ 작품 A 사진 미설정 ]</div>
             </div>
             <div class="meta-info">
                 <h2>무제 (Untitled)</h2>
                 <p>작가 미상, 2026</p>
-                <button class="interact-btn" onclick="openMuseumModal('작품 A', '당혹감', '78%', '“나만 무지해서 당황한 줄 알았는데, 관람객의 78%가 나와 같은 감정을 공유하고 있습니다. 당신의 당혹감은 오진이 아닌 정당한 미적 감상입니다.”')">솔직한 느낌 공유하기</button>
+                <button class="interact-btn" onclick="openMuseumModal('작품 A')">솔직한 느낌 공유하기</button>
             </div>
         </div>
 
         <div class="artwork-section">
-            <div class="frame" onclick="openMuseumModal('작품 B', '소외감', '65%', '“어려운 개념과 수식 같은 형태에 주눅 들지 마세요. 다른 이들도 똑같이 난해함을 느끼며 소통의 문을 두드리고 있습니다.”')">
-                <div class="art-shapes"></div>
+            <div class="frame" onclick="openMuseumModal('작품 B')">
+                <div class="art-placeholder">[ 작품 B 사진 미설정 ]</div>
             </div>
             <div class="meta-info">
                 <h2>구조와 왜곡</h2>
                 <p>작가 미상, 2026</p>
-                <button class="interact-btn" onclick="openMuseumModal('작품 B', '소외감', '65%', '“어려운 개념과 수식 같은 형태에 주눅 들지 마세요. 다른 이들도 똑같이 난해함을 느끼며 소통의 문을 두드리고 있습니다.”')">솔직한 느낌 공유하기</button>
-            </div>
-        </div>
-
-        <div class="artwork-section">
-            <div class="frame" onclick="openMuseumModal('작품 C', '실소/황당함', '82%', '“벽에 붙은 바나나를 보며 터져 나온 황당한 웃음, 그것이 칸트가 말한 인간 공통의 감각이자 소통의 진짜 시작점입니다.”')">
-                <div class="art-banana">🍌</div>
-            </div>
-            <div class="meta-info">
-                <h2>코미디언 (재해석)</h2>
-                <p>작가 미상, 2026</p>
-                <button class="interact-btn" onclick="openMuseumModal('작품 C', '실소/황당함', '82%', '“벽에 붙은 바나나를 보며 터져 나온 황당한 웃음, 그것이 칸트가 말한 인간 공통의 감각이자 소통의 진짜 시작점입니다.”')">솔직한 느낌 공유하기</button>
+                <button class="interact-btn" onclick="openMuseumModal('작품 B')">솔직한 느낌 공유하기</button>
             </div>
         </div>
 
@@ -271,30 +306,17 @@
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content">
             <span class="close-btn" onclick="closeMuseumModal()">&times;</span>
+            <h3 id="modalTitle">작품에 대한 솔직한 감정</h3>
             
-            <div id="selectionScreen">
-                <h3 id="modalTitle">이 작품을 보고 어떤 느낌이 드셨나요?</h3>
-                <div class="emotion-group">
-                    <button class="emotion-btn" onclick="showMuseumResult()">🤨 황당함 / 어이없음</button>
-                    <button class="emotion-btn" onclick="showMuseumResult()">😑 난해함 / 소외감</button>
-                    <button class="emotion-btn" onclick="showMuseumResult()">🤣 실소 / 재미</button>
-                    <button class="emotion-btn" onclick="showMuseumResult()">😍 경이로움 / 감동</button>
-                </div>
-            </div>
+            <div class="bubble-space" id="bubbleSpace"></div>
 
-            <div id="resultScreen" class="result-screen">
-                <h3>잠든 공통감의 각성</h3>
-                <div class="stat-bar-container">
-                    <div class="stat-label">
-                        <span id="targetEmotion">당혹감</span>
-                        <span id="targetPercent">0%</span>
-                    </div>
-                    <div class="stat-bar-bg">
-                        <div class="stat-bar-fill" id="statBarFill"></div>
-                    </div>
+            <div class="input-area">
+                <div class="chat-form">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="타인의 시선 없이, 당신만의 솔직한 한 줄 평을 적어보세요..." onkeypress="handleKeyPress(event)">
+                    <button class="submit-btn" onclick="addNewBubble()">등록</button>
                 </div>
-                <div class="peer-feedback" id="peerFeedback">
-                    타인의 한 줄 평 피드백 공간
+                <div class="commonsense-match-box" id="matchBox">
+                    의견을 입력하시면 <span class="match-highlight">칸트적 공통감(Gemeinsinn)</span> 공간에 단어가 기록됩니다.
                 </div>
             </div>
 
@@ -302,43 +324,95 @@
     </div>
 
     <script>
-        // 1. 마우스 휠 아래로 내리면 가로로 스크롤 되도록 변환
-        const container = document.getElementById('museumContainer');
-        container.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            container.scrollLeft += e.deltaY;
-        });
+        let 현재작품 = '작품 A';
+        
+        const 실시간공통감DB = {
+            '작품 A': [],
+            '작품 B': []
+        };
 
-        let currentMaxPercent = "0%";
-
-        // 2. 팝업 열기
-        function openMuseumModal(title, emotion, percent, feedback) {
+        function openMuseumModal(title) {
+            현재작품 = title;
+            document.getElementById('modalTitle').innerText = `『${title}』에 대한 솔직한 감정`;
             document.getElementById('modalOverlay').classList.add('active');
-            document.getElementById('selectionScreen').style.display = 'block';
-            document.getElementById('resultScreen').style.display = 'none';
-            document.getElementById('statBarFill').style.width = '0%';
-            
-            // 데이터 매핑
-            document.getElementById('targetEmotion').innerText = emotion + " (관람객 평균)";
-            document.getElementById('targetPercent').innerText = percent;
-            document.getElementById('peerFeedback').innerText = feedback;
-            currentMaxPercent = percent;
+            document.getElementById('matchBox').innerHTML = `의견을 입력하시면 <span class="match-highlight">칸트적 공통감(Gemeinsinn)</span> 공간에 단어가 기록됩니다.`;
+            document.getElementById('chatInput').value = "";
+            document.getElementById('bubbleSpace').innerHTML = ""; 
         }
 
-        // 3. 팝업 닫기
         function closeMuseumModal() {
             document.getElementById('modalOverlay').classList.remove('active');
         }
 
-        // 4. 감정 선택 시 결과 통계 그래프 애니메이션 연출 (공통감 확인)
-        function showMuseumResult() {
-            document.getElementById('selectionScreen').style.display = 'none';
-            document.getElementById('resultScreen').style.display = 'block';
+        function createBubbleElement(text) {
+            const space = document.getElementById('bubbleSpace');
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.innerText = text;
+
+            const randomLeft = 5 + Math.random() * 60; 
+            const randomXMove = (Math.random() * 40 - 20) + "px"; 
+
+            bubble.style.left = `${randomLeft}%`;
+            bubble.style.setProperty('--random-x', randomXMove);
+
+            space.appendChild(bubble);
             
-            // 그래프 게이지 채워지는 애니메이션 trigger
-            setTimeout(() => {
-                document.getElementById('statBarFill').style.width = currentMaxPercent;
-            }, 100);
+            setTimeout(() => { bubble.remove(); }, 9000);
+        }
+
+        function addNewBubble() {
+            const input = document.getElementById('chatInput');
+            const userText = input.value.trim();
+            
+            if(userText === "") return;
+
+            // 1. 내가 입력한 감정이 즉시 말풍선으로 스르륵 떠오름
+            createBubbleElement(userText);
+
+            // 2. 문장을 의미 있는 단어 조각(형태소 대용)으로 쪼개기 
+            // 띄어쓰기 기준으로 나누되, 조사나 어미 처리를 위해 앞의 2글자 이상만 추출해 비교에 사용
+            const 현재단어들 = userText.split(" ")
+                                      .map(w => w.substring(0, 3)) // '어렵고' -> '어렵', '난해하다' -> '난해하'
+                                      .filter(w => w.length >= 1);
+
+            let 동일감정인원수 = 0;
+
+            // 3. [유연한 매칭 로직] 과거 답변들과 유기적으로 교차 검사
+            실시간공통감DB[현재작품].forEach(pastText => {
+                let matchFound = false;
+
+                // 과거 답변을 쪼갠 단어 조각들
+                const 과거단어들 = pastText.split(" ").map(w => w.substring(0, 3)).filter(w => w.length >= 1);
+
+                // 상호 텍스트 포함 여부 검사 (어렵다 ↔ 어렵고 난해하다 교차 인식)
+                현재단어들.forEach(curW => {
+                    if(pastText.includes(curW)) matchFound = true;
+                });
+                과거단어들.forEach(pastW => {
+                    if(userText.includes(pastW)) matchFound = true;
+                });
+
+                if(matchFound) 동일감정인원수++;
+            });
+
+            // 4. 현재 사용자의 데이터도 DB에 누적 저장
+            실시간공통감DB[현재작품].push(userText);
+            
+            // 나 자신도 카운트에 포함되므로 매칭 인원은 최소 1명부터 시작
+            동일감정인원수 += 1;
+
+            // 5. 결과 출력창 반영
+            const matchBox = document.getElementById('matchBox');
+            matchBox.innerHTML = `현재까지 당신과 유사한 감정의 맥락을 소통하고 공유한 대중은 <span class="match-highlight">총 ${동일감정인원수}명</span>입니다.`;
+
+            input.value = ""; 
+        }
+
+        function handleKeyPress(e) {
+            if(e.key === 'Enter') {
+                addNewBubble();
+            }
         }
     </script>
 </body>
