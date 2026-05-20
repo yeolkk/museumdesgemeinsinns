@@ -43,7 +43,7 @@
         }
 
         .museum-container {
-            max-width: 600px; /* 전시 벽면 최적 너비 */
+            max-width: 600px; 
             margin: 0 auto;
             padding: 140px 20px 80px 20px;
             display: flex;
@@ -59,7 +59,6 @@
             text-align: center;
         }
         
-        /* 💡 가둬두던 네모 상자(프레임)를 없애고 터치/클릭 영역만 지정 */
         .frame {
             width: 100%;
             background: transparent;
@@ -73,7 +72,6 @@
             transform: translateY(-5px);
         }
 
-        /* 💡 그림에 미세한 그림자만 주어 벽에 걸린 느낌을 내고, 잘림 없이 100% 원본 비율 출력 */
         .frame img {
             width: 100%;
             height: auto;
@@ -270,6 +268,9 @@
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500&family=Playfair+Display&display=swap" rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -369,16 +370,23 @@
     </div>
 
     <script>
-        let 현재작품 = '기억의 지속';
-        
-        const 실시간공통감DB = {
-            '기억의 지속': [],
-            '검은 사각형과 빨간 사각형': [],
-            '무제': [],
-            '샘': [],
-            '코미디언': [],
-            '예술가의 똥': []
+        // ⚠️ [중요] 구글 Firebase 콘솔에서 발급받은 본인의 설정 값으로 변경해야 정상 작동합니다.
+        const firebaseConfig = {
+            apiKey: "본인의_API_KEY",
+            authDomain: "본인의_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://본인의_PROJECT_ID-default-rtdb.firebaseio.com",
+            projectId: "본인의_PROJECT_ID",
+            storageBucket: "본인의_PROJECT_ID.appspot.com",
+            messagingSenderId: "본인의_SENDER_ID",
+            appId: "본인의_APP_ID"
         };
+
+        // Firebase 초기화
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let 현재작품 = '기억의 지속';
+        let 서버공통감데이터 = [];
 
         function openMuseumModal(title) {
             현재작품 = title;
@@ -387,10 +395,30 @@
             document.getElementById('matchBox').innerHTML = `의견을 입력하시면 <span class="match-highlight">칸트적 공통감(Gemeinsinn)</span> 공간에 단어가 기록됩니다.`;
             document.getElementById('chatInput').value = "";
             document.getElementById('bubbleSpace').innerHTML = ""; 
+
+            // 🌐 다른 디바이스가 등록한 데이터를 서버에서 실시간으로 불러오고 동기화하기
+            const artworkRef = database.ref('artwork_emotions/' + 현재작품);
+            artworkRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    서버공통감데이터 = Object.values(data);
+                    
+                    // 기존 화면의 말풍선을 갱신하되, 너무 많이 겹치지 않게 최근 5개만 화면에 띄워주기
+                    document.getElementById('bubbleSpace').innerHTML = ""; 
+                    const 최근데이터 = 서버공통감데이터.slice(-5);
+                    최근데이터.forEach(text => {
+                        createBubbleElement(text);
+                    });
+                } else {
+                    서버공통감데이터 = [];
+                }
+            });
         }
 
         function closeMuseumModal() {
             document.getElementById('modalOverlay').classList.remove('active');
+            // 모달을 닫을 때는 실시간 리스너를 해제하여 리소스 낭비 방지
+            database.ref('artwork_emotions/' + 현재작품).off();
         }
 
         function createBubbleElement(text) {
@@ -416,19 +444,17 @@
             
             if(userText === "") return;
 
+            // 1. 내가 입력한 텍스트를 우선 화면에 즉시 띄움
             createBubbleElement(userText);
 
+            // 2. 어근 추출 매칭 로직 작동
             const 현재단어들 = userText.split(" ")
                                       .map(w => w.substring(0, 3)) 
                                       .filter(w => w.length >= 1);
 
             let 동일감정인원수 = 0;
 
-            if (!실시간공통감DB[현재작품]) {
-                실시간공통감DB[현재작품] = [];
-            }
-
-            실시간공통감DB[현재작품].forEach(pastText => {
+            서버공통감데이터.forEach(pastText => {
                 let matchFound = false;
                 const 과거단어들 = pastText.split(" ").map(w => w.substring(0, 3)).filter(w => w.length >= 1);
 
@@ -442,7 +468,9 @@
                 if(matchFound) 동일감정인원수++;
             });
 
-            실시간공통감DB[현재작품].push(userText);
+            // 3. 🌐 로컬 저장 대신, 전 세계 공용 Firebase Realtime Database 서버로 데이터 전송(Push)
+            database.ref('artwork_emotions/' + 현재작품).push(userText);
+            
             동일감정인원수 += 1;
 
             const matchBox = document.getElementById('matchBox');
