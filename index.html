@@ -59,10 +59,10 @@
             text-align: center;
         }
         
+        /* 💡 고정 높이를 없애고, 사진 원본 비율에 맞춰 늘어나도록 수정 */
         .frame {
             width: 100%;
             max-width: 550px;
-            height: 400px;
             background-color: #141414;
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 30px 60px rgba(0,0,0,0.6);
@@ -74,16 +74,19 @@
             transition: transform 0.4s ease, border-color 0.4s ease;
             overflow: hidden;
             border-radius: 4px;
+            padding: 10px; /* 사진 보호용 미세 여백 */
         }
         .frame:hover {
             transform: translateY(-5px);
             border-color: rgba(255, 255, 255, 0.3);
         }
 
+        /* 💡 사진이 잘리지 않고 온전한 비율(contain)로 다 보이게 핵심 수정 */
         .frame img {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            height: auto;
+            object-fit: contain;
+            display: block;
         }
 
         .meta-info {
@@ -356,7 +359,7 @@
         <div class="modal-content">
             <span class="close-btn" onclick="closeMuseumModal()">&times;</span>
             <h3 id="modalTitle">작품에 대한 솔직한 감정</h3>
-            <div class="modal-subtitle">머리로 분석하지 말고, 보자마자 스친 날것의 감정을 적어주세요.</div>
+            <div class="modal-subtitle">머리로 분석하지 말고, 보자마자 느낀 것을 적어주세요.</div>
             
             <div class="bubble-space" id="bubbleSpace"></div>
 
@@ -376,7 +379,6 @@
     <script>
         let 현재작품 = '기억의 지속';
         
-        // 실시간으로 작품별 관람객 단어가 누적되는 가상 DB 세팅
         const 실시간공통감DB = {
             '기억의 지속': [],
             '검은 사각형과 빨간 사각형': [],
@@ -388,7 +390,7 @@
 
         function openMuseumModal(title) {
             현재작품 = title;
-            document.getElementById('modalTitle').innerText = `『${title}』에 대한 솔직한 감정`;
+            document.getElementById('modalTitle').innerText = `『${title}』에 대한 솔직한 느낌`;
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('matchBox').innerHTML = `의견을 입력하시면 <span class="match-highlight">칸트적 공통감(Gemeinsinn)</span> 공간에 단어가 기록됩니다.`;
             document.getElementById('chatInput').value = "";
@@ -424,7 +426,6 @@
 
             createBubbleElement(userText);
 
-            // 단어를 유연하게 쪼개어 교차 검사하는 공통감 매칭 알고리즘
             const 현재단어들 = userText.split(" ")
                                       .map(w => w.substring(0, 3)) 
                                       .filter(w => w.length >= 1);
@@ -453,7 +454,7 @@
             동일감정인원수 += 1;
 
             const matchBox = document.getElementById('matchBox');
-            matchBox.innerHTML = `현재까지 당신과 유사한 감정의 맥락을 느낀 사람은 <span class="match-highlight">총 ${동일감정인원수}명</span>입니다.`;
+            matchBox.innerHTML = `현재까지 당신과 유사한 감정의 맥락을 공유한 사람은 <span class="match-highlight">총 ${동일감정인원수}명</span>입니다.`;
 
             input.value = ""; 
         }
