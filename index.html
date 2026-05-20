@@ -187,15 +187,15 @@
 
         .bubble {
             position: absolute;
-            background: rgba(255, 255, 255, 0.06); 
-            border: 1px solid rgba(255,255,255,0.15);
-            color: #ddd;
-            padding: 12px 18px;
+            background: rgba(255, 255, 255, 0.07); 
+            border: 1px solid rgba(255,255,255,0.18);
+            color: #eee;
+            padding: 10px 16px;
             border-radius: 20px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             white-space: nowrap;
             pointer-events: none;
-            animation: floatUp 9s linear forwards; 
+            animation: floatUp 8s linear forwards; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             z-index: 5;
         }
@@ -205,10 +205,10 @@
                 transform: translateY(65vh) translateX(0);
                 opacity: 0;
             }
-            15% { opacity: 1; }
-            85% { opacity: 1; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
             100% {
-                transform: translateY(-10vh) translateX(var(--random-x, 20px));
+                transform: translateY(-10vh) translateX(var(--random-x, 15px));
                 opacity: 0;
             }
         }
@@ -349,7 +349,7 @@
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content">
             <span class="close-btn" onclick="closeMuseumModal()">&times;</span>
-            <h3 id="modalTitle">작품에 대한 느낌</h3>
+            <h3 id="modalTitle">작품에 대한 솔직한 느낌</h3>
             <div class="modal-subtitle">무엇을 느끼셨나요?</div>
             
             <div class="bubble-space" id="bubbleSpace"></div>
@@ -377,10 +377,13 @@
 
         let 현재작품 = '기억의 지속';
         let 서버공통감데이터 = [];
+        let 처음로딩완료 = false; // 🔒 옛날 데이터 폭탄 방지용 플래그
+        let 마지막레인 = -1;
 
         function openMuseumModal(title) {
             현재작품 = title;
-            document.getElementById('modalTitle').innerText = `『${title}』에 대한 솔직한 감정`;
+            처음로딩완료 = false; // 리셋
+            document.getElementById('modalTitle').innerText = `『${title}』에 대한 솔직한 느낌`;
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('matchBox').innerHTML = `의견을 입력하시면 <span class="match-highlight">칸트의 공통감(Gemeinsinn)</span> 공간에 단어가 기록됩니다.`;
             document.getElementById('chatInput').value = "";
@@ -389,34 +392,60 @@
 
             const artworkRef = database.ref('artwork_emotions/' + 현재작품);
             
-            // 📡 [핵심 수정] 새로 추가되는 데이터를 실시간으로 감시 (누가 쓰든 무조건 내 화면에 실시간 발사)
+            // 최초 전체 데이터 한 번만 조용히 수집 (말풍선 안 만듦)
+            artworkRef.once('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    서버공통감데이터 = Object.values(data);
+                }
+                처음로딩완료 = true; // 🔓 준비 완료! 이제부터 들어오는 데이터만 말풍선으로 쏨!
+            });
+
+            // 실시간 감시 파트
             artworkRef.on('child_added', (snapshot) => {
                 const newText = snapshot.val();
-                서버공통감데이터.push(newText);
-                createBubbleElement(newText); // 👈 친구가 다른 기기에서 보내도 내 화면에 즉시 말풍선 팝업!
+                
+                // 처음 열었을 때 수집하는 옛날 데이터는 패스하고, 로딩 끝난 '이후'의 새 데이터만 실시간 화면 표출
+                if (처음로딩완료) {
+                    서버공통감데이터.push(newText);
+                    createBubbleElement(newText);
+                }
             });
         }
 
         function closeMuseumModal() {
             document.getElementById('modalOverlay').classList.remove('active');
             database.ref('artwork_emotions/' + 현재작품).off();
+            처음로딩완료 = false;
         }
 
+        // 🛡️ 겹침 방지 알고리즘 적용 (세로 레인 분배 방식)
         function createBubbleElement(text) {
             const space = document.getElementById('bubbleSpace');
             const bubble = document.createElement('div');
             bubble.className = 'bubble';
             bubble.innerText = text;
 
-            const randomLeft = 5 + Math.random() * 60; 
-            const randomXMove = (Math.random() * 40 - 20) + "px"; 
+            // 4개의 영역(0, 1, 2, 3)으로 나눠서 직전 말풍선과 절대 같은 곳에 안 겹치게 지정
+            let 현재레인 = Math.floor(Math.random() * 4);
+            while (현재레인 === 마지막레인) {
+                현재레인 = Math.floor(Math.random() * 4);
+            }
+            마지막레인 = 현재레인;
 
-            bubble.style.left = `${randomLeft}%`;
+            // 레인에 따른 고정 좌우 위치 조절 + 미세한 오차값 부여
+            const baseLeft = 현재레인 * 22 + 5; 
+            const randomOffset = Math.random() * 8; 
+            const finalLeft = baseLeft + randomOffset;
+
+            const randomXMove = (Math.random() * 30 - 15) + "px"; 
+
+            bubble.style.left = `${finalLeft}%`;
             bubble.style.setProperty('--random-x', randomXMove);
 
             space.appendChild(bubble);
             
-            setTimeout(() => { bubble.remove(); }, 9000);
+            setTimeout(() => { bubble.remove(); }, 8000);
         }
 
         function addNewBubble() {
@@ -425,12 +454,15 @@
             
             if(userText === "") return;
 
+            // 🚀 최적화 속도 패치: 연산 및 서버 통신 전에 화면에 먼저 0초 만에 쏴버리기
+            createBubbleElement(userText);
             input.value = ""; 
 
+            // 무거운 연산 작업은 다음 틱으로 넘겨서 입력 브라우저 렉(딜레이) 현상 완벽 방지
             setTimeout(() => {
                 const 현재단어들 = userText.split(" ")
-                                      .map(w => w.substring(0, 3)) 
-                                      .filter(w => w.length >= 1);
+                                          .map(w => w.substring(0, 3)) 
+                                          .filter(w => w.length >= 1);
 
                 let 동일감정인원수 = 0;
 
@@ -448,9 +480,11 @@
                     if(matchFound) 동일감정인원수++;
                 });
 
-                // 🌐 서버로 데이터를 전송하면 'child_added' 이벤트가 실행되면서 나를 포함한 모두에게 실시간으로 즉시 발사됨
+                // 서버 업로드
                 database.ref('artwork_emotions/' + 현재작품).push(userText);
                 
+                // 내 화면 데이터에도 강제 즉시 1개 더해줌 (연산 정합성 보정)
+                서버공통감데이터.push(userText);
                 동일감정인원수 += 1;
 
                 const matchBox = document.getElementById('matchBox');
