@@ -349,7 +349,7 @@
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content">
             <span class="close-btn" onclick="closeMuseumModal()">&times;</span>
-            <h3 id="modalTitle">작품에 대한 솔직한 느낌</h3>
+            <h3 id="modalTitle">작품에 대한 솔직한 감정</h3>
             <div class="modal-subtitle">무엇을 느끼셨나요?</div>
             
             <div class="bubble-space" id="bubbleSpace"></div>
@@ -377,12 +377,14 @@
 
         let 현재작품 = '기억의 지속';
         let 서버공통감데이터 = [];
-        let 처음로딩완료 = false; // 🔒 옛날 데이터 폭탄 방지용 플래그
+        let 처음로딩완료 = false; 
         let 마지막레인 = -1;
+        let 내가방금쓴텍스트 = ""; // 🛡️ 내 말풍선 중복 방지용 스토리지
 
         function openMuseumModal(title) {
             현재작품 = title;
-            처음로딩완료 = false; // 리셋
+            처음로딩완료 = false; 
+            내가방금쓴텍스트 = "";
             document.getElementById('modalTitle').innerText = `『${title}』에 대한 솔직한 느낌`;
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('matchBox').innerHTML = `의견을 입력하시면 <span class="match-highlight">칸트의 공통감(Gemeinsinn)</span> 공간에 단어가 기록됩니다.`;
@@ -392,22 +394,33 @@
 
             const artworkRef = database.ref('artwork_emotions/' + 현재작품);
             
-            // 최초 전체 데이터 한 번만 조용히 수집 (말풍선 안 만듦)
             artworkRef.once('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     서버공통감데이터 = Object.values(data);
                 }
-                처음로딩완료 = true; // 🔓 준비 완료! 이제부터 들어오는 데이터만 말풍선으로 쏨!
+                처음로딩완료 = true; 
             });
 
-            // 실시간 감시 파트
+            // 실시간 리스너
             artworkRef.on('child_added', (snapshot) => {
                 const newText = snapshot.val();
                 
-                // 처음 열었을 때 수집하는 옛날 데이터는 패스하고, 로딩 끝난 '이후'의 새 데이터만 실시간 화면 표출
                 if (처음로딩완료) {
                     서버공통감데이터.push(newText);
+                    
+                    // 🛑 [버그 수정] 내가 방금 전송해서 이미 화면에 떠 있는 말풍선이라면, 서버에서 온 중복 신호는 무시한다!
+                    if (newText === 내가방금쓴텍스트) {
+                        내가방금쓴텍스트 = ""; // 리셋 후 종료
+                        return;
+                    }
+                    
+                    // 🛑 [남의 말풍선 개수 제한] 현재 화면에 떠 있는 남의 말풍선이 3개 이상이면 가장 오래된 것 하나를 지운다.
+                    const currentBubbles = document.querySelectorAll('.bubble');
+                    if (currentBubbles.length >= 3) {
+                        currentBubbles[0].remove();
+                    }
+
                     createBubbleElement(newText);
                 }
             });
@@ -419,25 +432,21 @@
             처음로딩완료 = false;
         }
 
-        // 🛡️ 겹침 방지 알고리즘 적용 (세로 레인 분배 방식)
         function createBubbleElement(text) {
             const space = document.getElementById('bubbleSpace');
             const bubble = document.createElement('div');
             bubble.className = 'bubble';
             bubble.innerText = text;
 
-            // 4개의 영역(0, 1, 2, 3)으로 나눠서 직전 말풍선과 절대 같은 곳에 안 겹치게 지정
             let 현재레인 = Math.floor(Math.random() * 4);
             while (현재레인 === 마지막레인) {
                 현재레인 = Math.floor(Math.random() * 4);
             }
             마지막레인 = 현재레인;
 
-            // 레인에 따른 고정 좌우 위치 조절 + 미세한 오차값 부여
             const baseLeft = 현재레인 * 22 + 5; 
             const randomOffset = Math.random() * 8; 
             const finalLeft = baseLeft + randomOffset;
-
             const randomXMove = (Math.random() * 30 - 15) + "px"; 
 
             bubble.style.left = `${finalLeft}%`;
@@ -445,7 +454,7 @@
 
             space.appendChild(bubble);
             
-            setTimeout(() => { bubble.remove(); }, 8000);
+            setTimeout(() => { if(bubble) bubble.remove(); }, 8000);
         }
 
         function addNewBubble() {
@@ -454,11 +463,11 @@
             
             if(userText === "") return;
 
-            // 🚀 최적화 속도 패치: 연산 및 서버 통신 전에 화면에 먼저 0초 만에 쏴버리기
+            // 🚀 초고속 반응 패치: 내 화면에는 엔터 치자마자 딱 '1개'만 무조건 즉시 발사!
+            내가방금쓴텍스트 = userText; 
             createBubbleElement(userText);
             input.value = ""; 
 
-            // 무거운 연산 작업은 다음 틱으로 넘겨서 입력 브라우저 렉(딜레이) 현상 완벽 방지
             setTimeout(() => {
                 const 현재단어들 = userText.split(" ")
                                           .map(w => w.substring(0, 3)) 
@@ -480,10 +489,9 @@
                     if(matchFound) 동일감정인원수++;
                 });
 
-                // 서버 업로드
+                // 서버 업로드 (여기로 들어가면 남들의 리스너가 작동함)
                 database.ref('artwork_emotions/' + 현재작품).push(userText);
                 
-                // 내 화면 데이터에도 강제 즉시 1개 더해줌 (연산 정합성 보정)
                 서버공통감데이터.push(userText);
                 동일감정인원수 += 1;
 
