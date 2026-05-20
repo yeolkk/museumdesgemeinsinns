@@ -177,7 +177,14 @@
             font-weight: 400;
             letter-spacing: 1px;
             color: #e5e5e5;
+            margin-bottom: 4px;
+        }
+        
+        .modal-subtitle {
+            font-size: 0.8rem;
+            color: #666;
             margin-bottom: 15px;
+            letter-spacing: 0.5px;
         }
 
         .bubble-space {
@@ -193,7 +200,7 @@
 
         .bubble {
             position: absolute;
-            background: rgba(255, 255, 255, 0.06); /* 여러 개 쌓였을 때 겹쳐 보이도록 투명도 조정 */
+            background: rgba(255, 255, 255, 0.06); 
             border: 1px solid rgba(255,255,255,0.15);
             color: #ddd;
             padding: 12px 18px;
@@ -237,12 +244,17 @@
             border: 1px solid #333;
             color: #fff;
             padding: 12px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             border-radius: 4px;
             outline: none;
         }
         .chat-input:focus {
             border-color: #666;
+        }
+        /* 옅은 회색 글씨 스타일 커스텀 */
+        .chat-input::placeholder {
+            color: #555;
+            font-style: normal;
         }
         .submit-btn {
             background: #fff;
@@ -280,24 +292,24 @@
     <div class="museum-container">
         
         <div class="artwork-section">
-            <div class="frame" onclick="openMuseumModal('작품 A')">
-                <div class="art-placeholder">[ 작품 A 사진 미설정 ]</div>
+            <div class="frame" onclick="openMuseumModal('검은 사각형')">
+                <div class="art-placeholder">[ 검은 사각형 사진 미설정 ]</div>
             </div>
             <div class="meta-info">
-                <h2>무제 (Untitled)</h2>
-                <p>작가 미상, 2026</p>
-                <button class="interact-btn" onclick="openMuseumModal('작품 A')">솔직한 느낌 공유하기</button>
+                <h2>검은 사각형 (Black Square)</h2>
+                <p>카지미르 말레비치, 1915</p>
+                <button class="interact-btn" onclick="openMuseumModal('검은 사각형')">솔직한 느낌 공유하기</button>
             </div>
         </div>
 
         <div class="artwork-section">
-            <div class="frame" onclick="openMuseumModal('작품 B')">
-                <div class="art-placeholder">[ 작품 B 사진 미설정 ]</div>
+            <div class="frame" onclick="openMuseumModal('기억의 지속')">
+                <div class="art-placeholder">[ 기억의 지속 사진 미설정 ]</div>
             </div>
             <div class="meta-info">
-                <h2>구조와 왜곡</h2>
-                <p>작가 미상, 2026</p>
-                <button class="interact-btn" onclick="openMuseumModal('작품 B')">솔직한 느낌 공유하기</button>
+                <h2>기억의 지속 (The Persistence of Memory)</h2>
+                <p>살바도르 달리, 1931</p>
+                <button class="interact-btn" onclick="openMuseumModal('기억의 지속')">솔직한 느낌 공유하기</button>
             </div>
         </div>
 
@@ -307,12 +319,13 @@
         <div class="modal-content">
             <span class="close-btn" onclick="closeMuseumModal()">&times;</span>
             <h3 id="modalTitle">작품에 대한 솔직한 감정</h3>
+            <div class="modal-subtitle">머리로 분석하지 말고, 보자마자 스친 날것의 감정을 적어주세요.</div>
             
             <div class="bubble-space" id="bubbleSpace"></div>
 
             <div class="input-area">
                 <div class="chat-form">
-                    <input type="text" class="chat-input" id="chatInput" placeholder="타인의 시선 없이, 당신만의 솔직한 한 줄 평을 적어보세요..." onkeypress="handleKeyPress(event)">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="무슨 의도인지 모르겠다, 어렵다, 감동적이다, 아름답다 등 여러분이 느낀 점을 자유롭게 적어주세요!" onkeypress="handleKeyPress(event)">
                     <button class="submit-btn" onclick="addNewBubble()">등록</button>
                 </div>
                 <div class="commonsense-match-box" id="matchBox">
@@ -324,11 +337,11 @@
     </div>
 
     <script>
-        let 현재작품 = '작품 A';
+        let 현재작품 = '검은 사각형';
         
         const 실시간공통감DB = {
-            '작품 A': [],
-            '작품 B': []
+            '검은 사각형': [],
+            '기억의 지속': []
         };
 
         function openMuseumModal(title) {
@@ -367,25 +380,22 @@
             
             if(userText === "") return;
 
-            // 1. 내가 입력한 감정이 즉시 말풍선으로 스르륵 떠오름
             createBubbleElement(userText);
 
-            // 2. 문장을 의미 있는 단어 조각(형태소 대용)으로 쪼개기 
-            // 띄어쓰기 기준으로 나누되, 조사나 어미 처리를 위해 앞의 2글자 이상만 추출해 비교에 사용
             const 현재단어들 = userText.split(" ")
-                                      .map(w => w.substring(0, 3)) // '어렵고' -> '어렵', '난해하다' -> '난해하'
+                                      .map(w => w.substring(0, 3)) 
                                       .filter(w => w.length >= 1);
 
             let 동일감정인원수 = 0;
 
-            // 3. [유연한 매칭 로직] 과거 답변들과 유기적으로 교차 검사
+            if (!실시간공통감DB[현재작품]) {
+                실시간공통감DB[현재작품] = [];
+            }
+
             실시간공통감DB[현재작품].forEach(pastText => {
                 let matchFound = false;
-
-                // 과거 답변을 쪼갠 단어 조각들
                 const 과거단어들 = pastText.split(" ").map(w => w.substring(0, 3)).filter(w => w.length >= 1);
 
-                // 상호 텍스트 포함 여부 검사 (어렵다 ↔ 어렵고 난해하다 교차 인식)
                 현재단어들.forEach(curW => {
                     if(pastText.includes(curW)) matchFound = true;
                 });
@@ -396,13 +406,9 @@
                 if(matchFound) 동일감정인원수++;
             });
 
-            // 4. 현재 사용자의 데이터도 DB에 누적 저장
             실시간공통감DB[현재작품].push(userText);
-            
-            // 나 자신도 카운트에 포함되므로 매칭 인원은 최소 1명부터 시작
             동일감정인원수 += 1;
 
-            // 5. 결과 출력창 반영
             const matchBox = document.getElementById('matchBox');
             matchBox.innerHTML = `현재까지 당신과 유사한 감정의 맥락을 소통하고 공유한 대중은 <span class="match-highlight">총 ${동일감정인원수}명</span>입니다.`;
 
